@@ -1,0 +1,1505 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>離線銷售資料清理與圖表分析工具</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --text: #0f172a;
+      --text-muted: #475569;
+      --border: #e2e8f0;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --success-bg: #dcfce7;
+      --success-text: #166534;
+      --warn-bg: #fef3c7;
+      --warn-text: #92400e;
+      --danger-bg: #fee2e2;
+      --danger-text: #991b1b;
+      --neutral-bg: #f1f5f9;
+      --neutral-text: #334155;
+      --radius: 12px;
+      --shadow: 0 1px 3px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1120px;
+      margin: 0 auto;
+    }
+
+    /* 頁首與控制區 */
+    header {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    .header-top {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .icon-svg {
+      width: 22px;
+      height: 22px;
+      flex-shrink: 0;
+    }
+
+    .subtitle {
+      font-size: 0.92rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .file-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background-color: var(--primary);
+      color: #ffffff;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: background-color 0.15s ease;
+    }
+
+    .file-label:hover {
+      background-color: var(--primary-hover);
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    button.btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background-color: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 9px 14px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    button.btn-secondary:hover {
+      background-color: var(--neutral-bg);
+      border-color: #cbd5e1;
+    }
+
+    button.btn-export {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background-color: #eff6ff;
+      color: #1d4ed8;
+      border: 1px solid #bfdbfe;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    button.btn-export:hover {
+      background-color: #dbeafe;
+    }
+
+    .status-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+      font-size: 0.9rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      background: var(--neutral-bg);
+      color: var(--neutral-text);
+    }
+
+    .badge.active {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    /* 訊息提示框（取代 alert） */
+    .message-box {
+      display: none;
+      padding: 14px 18px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      font-size: 0.95rem;
+      border: 1px solid #fecaca;
+      background-color: #fef2f2;
+      color: #991b1b;
+    }
+
+    .message-box.show {
+      display: block;
+    }
+
+    /* 指標卡片網格 */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .kpi-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      box-shadow: var(--shadow);
+    }
+
+    .kpi-title {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .kpi-value {
+      font-size: 1.65rem;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.02em;
+    }
+
+    .kpi-sub {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* 內容區塊卡片 */
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    .panel h2 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    /* 自適應 SVG 圖表容器 */
+    .chart-wrapper {
+      width: 100%;
+      height: 320px;
+      position: relative;
+      margin-bottom: 12px;
+    }
+
+    .chart-wrapper svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+      background-color: #ffffff;
+      user-select: none;
+    }
+
+    /* SVG 圖表互動與高亮過渡效果 */
+    .svg-bar {
+      transition: opacity 0.2s ease, filter 0.2s ease;
+      cursor: pointer;
+    }
+
+    .svg-bar.dimmed {
+      opacity: 0.25;
+    }
+
+    .svg-bar.highlighted {
+      opacity: 1;
+      filter: drop-shadow(0 4px 10px rgba(37, 99, 235, 0.48));
+    }
+
+    .svg-point-group {
+      cursor: pointer;
+      transition: opacity 0.2s ease;
+    }
+
+    .svg-point-group.dimmed {
+      opacity: 0.25;
+    }
+
+    .svg-point-circle {
+      transition: r 0.2s ease, fill 0.2s ease, stroke-width 0.2s ease;
+    }
+
+    .svg-point-group.highlighted .svg-point-circle {
+      r: 7;
+      fill: #f59e0b;
+      stroke: #b45309;
+      stroke-width: 2.5;
+    }
+
+    .svg-tooltip-box {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.18s ease;
+    }
+
+    .svg-tooltip-box.visible {
+      opacity: 1;
+    }
+
+    /* 表格列互動提示樣式 */
+    tbody tr.interactive-row {
+      cursor: pointer;
+      transition: background-color 0.15s ease;
+    }
+
+    tbody tr.interactive-row:hover td,
+    tbody tr.interactive-row.active-row td {
+      background-color: #eff6ff;
+    }
+
+    tbody tr.interactive-row.active-row td:first-child {
+      box-shadow: inset 4px 0 0 var(--primary);
+    }
+
+    /* 資料表格樣式 */
+    .table-responsive {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.92rem;
+    }
+
+    th, td {
+      padding: 11px 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      background-color: #f8fafc;
+      font-weight: 600;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    td.num, th.num {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    tbody tr:hover {
+      background-color: #f8fafc;
+    }
+
+    /* 狀態標籤 */
+    .tag {
+      display: inline-block;
+      padding: 2px 9px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .tag-up { background: var(--success-bg); color: var(--success-text); }
+    .tag-down { background: var(--danger-bg); color: var(--danger-text); }
+    .tag-na { background: var(--neutral-bg); color: var(--neutral-text); }
+    .tag-warn { background: var(--warn-bg); color: var(--warn-text); }
+    .tag-danger { background: var(--danger-bg); color: var(--danger-text); }
+    .tag-info { background: #dbeafe; color: #1e40af; }
+
+    /* 清理統計卡片列 */
+    .audit-summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .audit-item {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      background: #f8fafc;
+    }
+
+    .audit-item .label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .audit-item .count {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin: 4px 0;
+    }
+
+    .audit-item .desc {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* 資料限制說明框 */
+    .limitations-box {
+      background-color: #fffbeb;
+      border: 1px solid #fde68a;
+      border-radius: 10px;
+      padding: 16px 20px;
+      color: #78350f;
+      font-size: 0.92rem;
+    }
+
+    .limitations-box h3 {
+      font-size: 1rem;
+      margin-bottom: 8px;
+      color: #92400e;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .limitations-box ul {
+      padding-left: 20px;
+    }
+
+    .limitations-box li {
+      margin-bottom: 4px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 48px 20px;
+      color: var(--text-muted);
+    }
+
+    @media (max-width: 640px) {
+      body { padding: 12px; }
+      header, .panel { padding: 16px; }
+      .chart-wrapper { height: 260px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <!-- 頁首與檔案上傳控制區 -->
+  <header>
+    <div class="header-top">
+      <div>
+        <h1>
+          <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="18" y1="20" x2="18" y2="10"></line>
+            <line x1="12" y1="20" x2="12" y2="4"></line>
+            <line x1="6" y1="20" x2="6" y2="14"></line>
+          </svg>
+          <span>離線銷售資料清理與圖表分析工具</span>
+        </h1>
+        <p class="subtitle">零外部相依套件 · 自動辨識「24 個月彙總資料」與「4 月交易明細」並執行資料字典清理規則</p>
+      </div>
+      <div class="toolbar">
+        <label for="csvFileInput" class="file-label">
+          <svg class="icon-svg" style="width: 18px; height: 18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="17 8 12 3 7 8"></polyline>
+            <line x1="12" y1="3" x2="12" y2="15"></line>
+          </svg>
+          <span>選擇 CSV 檔案</span>
+        </label>
+        <input type="file" id="csvFileInput" accept=".csv,text/csv" />
+        <button type="button" class="btn-secondary" id="btnSampleMonthly">
+          <svg class="icon-svg" style="width: 16px; height: 16px;" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+          </svg>
+          <span>載入範例：24 個月彙總</span>
+        </button>
+        <button type="button" class="btn-secondary" id="btnSampleRaw">
+          <svg class="icon-svg" style="width: 16px; height: 16px;" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+          </svg>
+          <span>載入範例：4 月交易明細</span>
+        </button>
+      </div>
+    </div>
+    <div class="status-bar">
+      <div>
+        目前檔案：<strong id="currentFileName">尚未載入檔案</strong>
+      </div>
+      <div>
+        辨識資料類型：<span id="datasetTypeBadge" class="badge">等待匯入 CSV</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- 錯誤或警告訊息提示區 -->
+  <div id="messageBox" class="message-box" role="alert"></div>
+
+  <!-- 初始空白提示狀態 -->
+  <div id="emptyStatePanel" class="panel empty-state">
+    <svg style="width: 48px; height: 48px; margin: 0 auto 12px; color: #94a3b8;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+      <line x1="3" y1="9" x2="21" y2="9"></line>
+      <line x1="9" y1="21" x2="9" y2="9"></line>
+    </svg>
+    <p style="font-size: 1.05rem; font-weight: 600; margin-bottom: 6px;">請選擇本機 CSV 檔案，或點擊上方「載入範例」按鈕檢視效果</p>
+    <p style="font-size: 0.9rem;">系統會依據欄位結構自動判斷資料類型，所有運算皆在您的瀏覽器本機完成，不上傳任何資料。</p>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- 視圖 A：24 個月彙總資料分析儀表板                          -->
+  <!-- ========================================================= -->
+  <div id="monthlyDashboard" class="hidden">
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-title">總營收（新台幣元）</div>
+        <div class="kpi-value" id="kpiTotalRevenue">-</div>
+        <div class="kpi-sub" id="kpiMonthSpan">統計區間：-</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">總訂單數</div>
+        <div class="kpi-value" id="kpiTotalOrders">-</div>
+        <div class="kpi-sub">所有月份訂單加總</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">加權客單價 (AOV)</div>
+        <div class="kpi-value" id="kpiWeightedAov">-</div>
+        <div class="kpi-sub">計算公式：總營收 ÷ 總訂單</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">最新月份年增率 (YoY)</div>
+        <div class="kpi-value" id="kpiLatestYoy">-</div>
+        <div class="kpi-sub" id="kpiLatestYoyDesc">與前一年同月比較</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>
+        <span>月營收趨勢圖（新台幣元）</span>
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+          <span style="font-size: 0.85rem; font-weight: 500; color: var(--text-muted);">滑鼠指向下方表格欄位可高亮對應月份節點</span>
+          <button type="button" class="btn-export" id="btnExportMonthlySvg">
+            <svg class="icon-svg" style="width: 15px; height: 15px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            <span>下載 SVG 圖表</span>
+          </button>
+        </div>
+      </h2>
+      <div class="chart-wrapper" id="monthlyChartContainer"></div>
+    </div>
+
+    <div class="panel">
+      <h2>月度營收明細與年增率 (YoY) 計算表</h2>
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>月份</th>
+              <th class="num">當月營收 (元)</th>
+              <th class="num">訂單數</th>
+              <th class="num">單月客單價 (元)</th>
+              <th class="num">前一年同月營收 (元)</th>
+              <th class="num">年增率 (YoY)</th>
+            </tr>
+          </thead>
+          <tbody id="monthlyTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- 視圖 B：4 月交易明細清理與區域統計儀表板                   -->
+  <!-- ========================================================= -->
+  <div id="rawDashboard" class="hidden">
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-title">清理後有效交易筆數</div>
+        <div class="kpi-value" id="kpiValidCount">-</div>
+        <div class="kpi-sub">含有效銷售 (SALE) 與有效退款 (REFUND)</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">清理後總淨營收（新台幣元）</div>
+        <div class="kpi-value" id="kpiNetRevenue">-</div>
+        <div class="kpi-sub">已扣除負數退款，排除重複/取消/缺日期</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">原始匯入總列數</div>
+        <div class="kpi-value" id="kpiRawTotalRows">-</div>
+        <div class="kpi-sub" id="kpiExcludedSummary">已排除/待查共 - 筆</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>
+        <span>清理後各區域淨額長條圖（新台幣元）</span>
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+          <span style="font-size: 0.85rem; font-weight: 500; color: var(--text-muted);">滑鼠指向下方區域欄位可高亮對應長條</span>
+          <button type="button" class="btn-export" id="btnExportRegionSvg">
+            <svg class="icon-svg" style="width: 15px; height: 15px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            <span>下載 SVG 圖表</span>
+          </button>
+        </div>
+      </h2>
+      <div class="chart-wrapper" id="regionChartContainer"></div>
+
+      <!-- 各區域彙總表 -->
+      <div class="table-responsive" style="margin-top: 16px;">
+        <table>
+          <thead>
+            <tr>
+              <th>區域 (region 原值)</th>
+              <th class="num">有效筆數</th>
+              <th class="num">清理後淨額 (元)</th>
+              <th>納入計算之交易編號</th>
+            </tr>
+          </thead>
+          <tbody id="regionTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 清理紀錄與異常處理數量 -->
+    <div class="panel">
+      <h2>資料清理與異常項目處理統計</h2>
+      <div class="audit-summary">
+        <div class="audit-item">
+          <div class="label">重複交易 (Duplicate)</div>
+          <div class="count" id="auditDupCount" style="color: #b45309;">0 筆</div>
+          <div class="desc">處理方式：<strong>排除</strong>（僅留首筆，不加總）</div>
+        </div>
+        <div class="audit-item">
+          <div class="label">取消交易 (CANCELLED)</div>
+          <div class="count" id="auditCancelCount" style="color: #991b1b;">0 筆</div>
+          <div class="desc">處理方式：<strong>排除</strong>（不計入營收與筆數）</div>
+        </div>
+        <div class="audit-item">
+          <div class="label">退款交易 (REFUND)</div>
+          <div class="count" id="auditRefundCount" style="color: #1e40af;">0 筆</div>
+          <div class="desc">處理方式：<strong>保留負值</strong>（納入淨營收扣減）</div>
+        </div>
+        <div class="audit-item">
+          <div class="label">缺漏日期 (Missing Date)</div>
+          <div class="count" id="auditNoDateCount" style="color: #92400e;">0 筆</div>
+          <div class="desc">處理方式：<strong>待查暫不計入</strong>（不猜補日期）</div>
+        </div>
+      </div>
+
+      <!-- 清理明細紀錄表 -->
+      <div class="table-responsive" style="margin-bottom: 18px;">
+        <table>
+          <thead>
+            <tr>
+              <th>交易編號</th>
+              <th>日期</th>
+              <th>區域</th>
+              <th class="num">金額 (元)</th>
+              <th>狀態</th>
+              <th>分類與處置結果</th>
+              <th>判定依據（資料字典規則）</th>
+            </tr>
+          </thead>
+          <tbody id="auditTableBody"></tbody>
+        </table>
+      </div>
+
+      <!-- 資料限制說明 -->
+      <div class="limitations-box">
+        <h3>
+          <svg style="width: 18px; height: 18px; flex-shrink: 0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <span>資料限制與解讀邊界（Data Limitations）</span>
+        </h3>
+        <ul>
+          <li><strong>時間跨度受限：</strong>本檔僅涵蓋單月（2026-04）交易明細，無法推論跨月季節性波動、年度成長率 (YoY) 或長期業績趨勢。</li>
+          <li><strong>缺乏業務成因與維度：</strong>資料表未包含商品品項 (SKU)、客群屬性、促銷活動、門市人力或退貨/取消原因欄位，因此無法解釋「為何特定區域業績較高」或「為何發生退款與取消」。</li>
+          <li><strong>待查資料潛在影響：</strong>空白日期交易（如 <code>TX-006</code>）依規則暫列待查不計入；若後續經人工補齊確認屬於本月交易，各區域淨額與有效筆數將會隨之變動。</li>
+          <li><strong>口徑不可混加：</strong>本明細表為單月原始交易紀錄，不可與「24 個月彙總資料」直接相加，以免造成重複計算。</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  /**
+   * ==========================================
+   * 全域狀態與內建離線範例資料
+   * ==========================================
+   */
+  let currentChartData = null;
+  let currentMode = null; // 'monthly' | 'raw'
+
+  // 範例 1：4 月交易明細（包含重複 TX-003、缺日期 TX-006、退款 TX-007、取消 TX-009）
+  const SAMPLE_RAW_CSV = `transaction_id,date,region,amount,status
+TX-001,2026-04-01,North,1200,SALE
+TX-002,2026-04-02,South,850,SALE
+TX-003,2026-04-03,North,1500,SALE
+TX-003,2026-04-03,North,1500,SALE
+TX-004,2026-04-05,East,2100,SALE
+TX-005,2026-04-07,West,950,SALE
+TX-006,,South,1100,SALE
+TX-007,2026-04-10,North,-200,REFUND
+TX-008,2026-04-12,East,1300,SALE
+TX-009,2026-04-15,West,1800,CANCELLED
+TX-010,2026-04-18,South,1450,SALE
+TX-011,2026-04-21,North,900,SALE
+TX-012,2026-04-25,West,1600,SALE`;
+
+  // 範例 2：24 個月彙總資料（前 12 個月無前一年同月，後 12 個月可計算 YoY）
+  const SAMPLE_MONTHLY_CSV = `month,revenue,orders
+2024-05,120000,240
+2024-06,125000,250
+2024-07,132000,260
+2024-08,128000,255
+2024-09,135000,270
+2024-10,142000,280
+2024-11,158000,310
+2024-12,175000,340
+2025-01,148000,290
+2025-02,139000,275
+2025-03,152000,300
+2025-04,160000,315
+2025-05,134400,265
+2025-06,137500,270
+2025-07,141240,278
+2025-08,124160,248
+2025-09,148500,292
+2025-10,159040,312
+2025-11,176960,345
+2025-12,196000,380
+2026-01,162800,318
+2026-02,147340,288
+2026-03,167200,325
+2026-04,179200,348`;
+
+  /**
+   * ==========================================
+   * 工具函式：CSV 解析與數字格式化
+   * ==========================================
+   */
+  function showMessage(msg) {
+    const box = document.getElementById('messageBox');
+    if (!msg) {
+      box.classList.remove('show');
+      box.textContent = '';
+    } else {
+      box.textContent = msg;
+      box.classList.add('show');
+    }
+  }
+
+  function formatNum(num) {
+    if (num === null || num === undefined || isNaN(num)) return '-';
+    return Math.round(num).toLocaleString('zh-TW');
+  }
+
+  // 穩健的單檔離線 CSV 解析器（支援引號欄位、BOM 移除與空行過濾）
+  function parseCSV(text) {
+    const cleanText = text.replace(/^\uFEFF/, '').trim();
+    if (!cleanText) return [];
+
+    const rows = [];
+    let currentRow = [];
+    let currentVal = '';
+    let inQuotes = false;
+
+    for (let i = 0; i < cleanText.length; i++) {
+      const char = cleanText[i];
+      const nextChar = cleanText[i + 1];
+
+      if (char === '"') {
+        if (inQuotes && nextChar === '"') {
+          currentVal += '"';
+          i++;
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (char === ',' && !inQuotes) {
+        currentRow.push(currentVal.trim());
+        currentVal = '';
+      } else if ((char === '\r' || char === '\n') && !inQuotes) {
+        if (char === '\r' && nextChar === '\n') i++;
+        currentRow.push(currentVal.trim());
+        if (currentRow.some(cell => cell !== '')) {
+          rows.push(currentRow);
+        }
+        currentRow = [];
+        currentVal = '';
+      } else {
+        currentVal += char;
+      }
+    }
+
+    if (currentVal !== '' || currentRow.length > 0) {
+      currentRow.push(currentVal.trim());
+      if (currentRow.some(cell => cell !== '')) {
+        rows.push(currentRow);
+      }
+    }
+
+    return rows;
+  }
+
+  /**
+   * ==========================================
+   * 檔案讀取與資料結構自動辨識
+   * ==========================================
+   */
+  document.getElementById('csvFileInput').addEventListener('change', function (e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function (event) {
+      processCsvContent(event.target.result, file.name);
+    };
+    reader.onerror = function () {
+      showMessage('讀取檔案失敗，請確認檔案未損毀且為 UTF-8 編碼的 CSV 檔案。');
+    };
+    reader.readAsText(file, 'UTF-8');
+  });
+
+  document.getElementById('btnSampleMonthly').addEventListener('click', () => {
+    processCsvContent(SAMPLE_MONTHLY_CSV, 'sales-24-months.csv (內建範例)');
+  });
+
+  document.getElementById('btnSampleRaw').addEventListener('click', () => {
+    processCsvContent(SAMPLE_RAW_CSV, 'sales-raw-transactions.csv (內建範例)');
+  });
+
+  function processCsvContent(csvText, fileName) {
+    showMessage('');
+    const rows = parseCSV(csvText);
+
+    if (rows.length < 2) {
+      showMessage('CSV 檔案內容不足，至少需要標題列與一筆資料列。');
+      return;
+    }
+
+    const headers = rows[0].map(h => h.toLowerCase().trim());
+    const dataRows = rows.slice(1);
+
+    document.getElementById('currentFileName').textContent = fileName;
+    document.getElementById('emptyStatePanel').classList.add('hidden');
+
+    // 辨識規則 1：4 月交易明細（包含 transaction_id, amount, status）
+    const isRawTransactions =
+      headers.includes('transaction_id') &&
+      headers.includes('amount') &&
+      headers.includes('status');
+
+    // 辨識規則 2：24 個月彙總資料（包含 month/date 與 revenue/sales）
+    const isMonthlySummary =
+      (headers.includes('month') || headers.includes('year_month') || headers.includes('period')) &&
+      (headers.includes('revenue') || headers.includes('sales') || headers.includes('total_revenue'));
+
+    const badge = document.getElementById('datasetTypeBadge');
+    badge.classList.add('active');
+
+    if (isRawTransactions) {
+      badge.textContent = '4 月交易明細（已啟用資料字典清理規則）';
+      document.getElementById('monthlyDashboard').classList.add('hidden');
+      document.getElementById('rawDashboard').classList.remove('hidden');
+      analyzeRawTransactions(headers, dataRows);
+    } else if (isMonthlySummary) {
+      badge.textContent = '24 個月彙總資料（趨勢與 YoY 分析）';
+      document.getElementById('rawDashboard').classList.add('hidden');
+      document.getElementById('monthlyDashboard').classList.remove('hidden');
+      analyzeMonthlySummary(headers, dataRows);
+    } else {
+      badge.classList.remove('active');
+      badge.textContent = '無法辨識的欄位結構';
+      document.getElementById('monthlyDashboard').classList.add('hidden');
+      document.getElementById('rawDashboard').classList.add('hidden');
+      document.getElementById('emptyStatePanel').classList.remove('hidden');
+      showMessage(
+        `無法自動辨識此 CSV 結構。偵測到的欄位為：[${headers.join(', ')}]。請確認檔案為「24 個月彙總資料 (month, revenue, orders)」或「4 月交易明細 (transaction_id, date, region, amount, status)」。`
+      );
+    }
+  }
+
+  /**
+   * ==========================================
+   * 模組 A：4 月交易明細清理引擎（嚴格依資料字典執行）
+   * ==========================================
+   */
+  function analyzeRawTransactions(headers, dataRows) {
+    const idxId = headers.indexOf('transaction_id');
+    const idxDate = headers.indexOf('date');
+    const idxRegion = headers.indexOf('region');
+    const idxAmount = headers.indexOf('amount');
+    const idxStatus = headers.indexOf('status');
+
+    const seenIds = new Set();
+    const validRecords = [];
+    const auditLogs = [];
+
+    let dupCount = 0;
+    let cancelCount = 0;
+    let refundCount = 0;
+    let noDateCount = 0;
+
+    dataRows.forEach((row) => {
+      const txId = (row[idxId] || '').trim();
+      const dateStr = idxDate !== -1 ? (row[idxDate] || '').trim() : '';
+      const regionStr = idxRegion !== -1 ? (row[idxRegion] || '').trim() : '未標示區域';
+      const rawAmount = parseFloat((row[idxAmount] || '0').replace(/,/g, ''));
+      const amount = isNaN(rawAmount) ? 0 : rawAmount;
+      const status = (row[idxStatus] || '').trim().toUpperCase();
+
+      // 規則 1：transaction_id 重複只保留第一筆；重複列另記在清理紀錄，不加總
+      if (seenIds.has(txId)) {
+        dupCount++;
+        auditLogs.push({
+          txId,
+          dateStr: dateStr || '(空白)',
+          regionStr,
+          amount,
+          status,
+          actionTag: '<span class="tag tag-warn">排除（重複列）</span>',
+          reason: '字典規則 [transaction_id]：重複 ID 只保留第一筆；另記清理紀錄，不加總。'
+        });
+        return;
+      }
+      seenIds.add(txId);
+
+      // 規則 2：status 為 CANCELLED 取消不計營收
+      if (status === 'CANCELLED') {
+        cancelCount++;
+        auditLogs.push({
+          txId,
+          dateStr: dateStr || '(空白)',
+          regionStr,
+          amount,
+          status,
+          actionTag: '<span class="tag tag-danger">排除（已取消）</span>',
+          reason: '字典規則 [status]：CANCELLED 取消交易不計入營收與有效筆數。'
+        });
+        return;
+      }
+
+      // 規則 3：date 空白日期不得猜補；先放入待查，不列入統計
+      if (!dateStr) {
+        noDateCount++;
+        auditLogs.push({
+          txId,
+          dateStr: '(空白缺漏)',
+          regionStr,
+          amount,
+          status,
+          actionTag: '<span class="tag tag-warn">待查（暫不計入）</span>',
+          reason: '字典規則 [date]：空白日期不得猜補；先放入待查，暫不計入本期統計。'
+        });
+        return;
+      }
+
+      // 規則 4：REFUND 退款為負數，納入淨營收；不可改成正數
+      if (status === 'REFUND') {
+        refundCount++;
+        const netRefund = amount > 0 ? -amount : amount;
+        validRecords.push({ txId, dateStr, regionStr, amount: netRefund, status });
+        auditLogs.push({
+          txId,
+          dateStr,
+          regionStr,
+          amount: netRefund,
+          status,
+          actionTag: '<span class="tag tag-info">納入統計（負值扣減）</span>',
+          reason: '字典規則 [amount / status]：退款保留負數納入淨營收，不與排除項目混淆。'
+        });
+        return;
+      }
+
+      // 規則 5：SALE 正常銷售納入
+      if (status === 'SALE') {
+        validRecords.push({ txId, dateStr, regionStr, amount, status });
+      }
+    });
+
+    // 規則 6：region 依原值分組，不自行合併
+    const regionMap = new Map();
+    validRecords.forEach(rec => {
+      if (!regionMap.has(rec.regionStr)) {
+        regionMap.set(rec.regionStr, {
+          region: rec.regionStr,
+          count: 0,
+          netAmount: 0,
+          ids: []
+        });
+      }
+      const group = regionMap.get(rec.regionStr);
+      group.count += 1;
+      group.netAmount += rec.amount;
+      group.ids.push(rec.txId);
+    });
+
+    const regionList = Array.from(regionMap.values());
+    const totalValidCount = validRecords.length;
+    const totalNetAmount = validRecords.reduce((sum, r) => sum + r.amount, 0);
+    const totalExcludedOrPending = dupCount + cancelCount + noDateCount;
+
+    // 更新上方 KPI 卡片
+    document.getElementById('kpiValidCount').textContent = `${totalValidCount} 筆`;
+    document.getElementById('kpiNetRevenue').textContent = `${formatNum(totalNetAmount)} 元`;
+    document.getElementById('kpiRawTotalRows').textContent = `${dataRows.length} 列`;
+    document.getElementById('kpiExcludedSummary').textContent =
+      `已排除 ${dupCount + cancelCount} 筆、待查 ${noDateCount} 筆`;
+
+    // 渲染各區域統計表（加入 data-key 與滑鼠事件支援聯動高亮）
+    const regionTbody = document.getElementById('regionTableBody');
+    regionTbody.innerHTML = regionList.map(r => `
+      <tr class="interactive-row" data-key="${r.region}">
+        <td><strong>${r.region}</strong></td>
+        <td class="num">${r.count} 筆</td>
+        <td class="num"><strong>${formatNum(r.netAmount)}</strong></td>
+        <td style="color: var(--text-muted); font-size: 0.85rem;">${r.ids.join('、')}</td>
+      </tr>
+    `).join('') + `
+      <tr style="background-color: #f1f5f9; font-weight: 700;">
+        <td>總計</td>
+        <td class="num">${totalValidCount} 筆</td>
+        <td class="num">${formatNum(totalNetAmount)}</td>
+        <td>-</td>
+      </tr>
+    `;
+
+    // 綁定表格滑鼠指向聯動圖表高亮
+    bindTableToChartHighlight(regionTbody, 'region');
+
+    // 渲染異常處理數量統計卡片
+    document.getElementById('auditDupCount').textContent = `${dupCount} 筆`;
+    document.getElementById('auditCancelCount').textContent = `${cancelCount} 筆`;
+    document.getElementById('auditRefundCount').textContent = `${refundCount} 筆`;
+    document.getElementById('auditNoDateCount').textContent = `${noDateCount} 筆`;
+
+    // 渲染清理紀錄明細表
+    const auditTbody = document.getElementById('auditTableBody');
+    if (auditLogs.length === 0) {
+      auditTbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--text-muted);">無重複、取消、退款或缺日期紀錄</td></tr>`;
+    } else {
+      auditTbody.innerHTML = auditLogs.map(item => `
+        <tr>
+          <td><strong>${item.txId}</strong></td>
+          <td>${item.dateStr}</td>
+          <td>${item.regionStr}</td>
+          <td class="num">${formatNum(item.amount)}</td>
+          <td><code>${item.status}</code></td>
+          <td>${item.actionTag}</td>
+          <td style="font-size: 0.85rem; color: var(--text-muted);">${item.reason}</td>
+        </tr>
+      `).join('');
+    }
+
+    // 儲存狀態並繪製互動式 SVG 長條圖
+    currentMode = 'raw';
+    currentChartData = regionList;
+    renderRegionBarChartSvg(regionList);
+  }
+
+  /**
+   * ==========================================
+   * 模組 B：24 個月彙總資料分析引擎
+   * ==========================================
+   */
+  function analyzeMonthlySummary(headers, dataRows) {
+    const idxMonth = headers.findIndex(h => ['month', 'year_month', 'period'].includes(h));
+    const idxRev = headers.findIndex(h => ['revenue', 'sales', 'total_revenue'].includes(h));
+    const idxOrders = headers.findIndex(h => ['orders', 'order_count', 'transactions'].includes(h));
+
+    const records = dataRows.map(row => {
+      const monthStr = (row[idxMonth] || '').trim();
+      const rev = parseFloat((row[idxRev] || '0').replace(/,/g, '')) || 0;
+      const orders = idxOrders !== -1 ? (parseFloat((row[idxOrders] || '0').replace(/,/g, '')) || 0) : 0;
+      return { monthStr, revenue: rev, orders };
+    }).filter(r => r.monthStr !== '');
+
+    // 依月份字串排序確保時間軸正確
+    records.sort((a, b) => a.monthStr.localeCompare(b.monthStr));
+
+    // 建立快速查詢 Map 以計算前一年同月 (YoY)
+    const revByMonth = new Map();
+    records.forEach(r => revByMonth.set(r.monthStr, r.revenue));
+
+    const enrichedRecords = records.map(r => {
+      let prevYearMonth = null;
+      const match = r.monthStr.match(/^(\d{4})[-/](\d{2})$/);
+      if (match) {
+        const prevYear = parseInt(match[1], 10) - 1;
+        prevYearMonth = `${prevYear}-${match[2]}`;
+      }
+
+      const prevRev = prevYearMonth && revByMonth.has(prevYearMonth) ? revByMonth.get(prevYearMonth) : null;
+      let yoyText = '缺前一年資料';
+      let yoyValue = null;
+
+      if (prevRev !== null && prevRev !== 0) {
+        yoyValue = ((r.revenue - prevRev) / prevRev) * 100;
+        const sign = yoyValue >= 0 ? '+' : '';
+        yoyText = `${sign}${yoyValue.toFixed(1)}%`;
+      }
+
+      const aov = r.orders > 0 ? r.revenue / r.orders : null;
+      return { ...r, prevRev, yoyValue, yoyText, aov };
+    });
+
+    const totalRevenue = enrichedRecords.reduce((sum, r) => sum + r.revenue, 0);
+    const totalOrders = enrichedRecords.reduce((sum, r) => sum + r.orders, 0);
+    const weightedAov = totalOrders > 0 ? totalRevenue / totalOrders : null;
+
+    // 更新 KPI 卡片
+    document.getElementById('kpiTotalRevenue').textContent = `${formatNum(totalRevenue)} 元`;
+    document.getElementById('kpiMonthSpan').textContent =
+      enrichedRecords.length > 0
+        ? `區間：${enrichedRecords[0].monthStr} 至 ${enrichedRecords[enrichedRecords.length - 1].monthStr}（共 ${enrichedRecords.length} 個月）`
+        : '無有效月份';
+    document.getElementById('kpiTotalOrders').textContent = totalOrders > 0 ? `${formatNum(totalOrders)} 筆` : '無訂單欄位';
+    document.getElementById('kpiWeightedAov').textContent = weightedAov !== null ? `${formatNum(weightedAov)} 元` : '-';
+
+    const latest = enrichedRecords[enrichedRecords.length - 1];
+    if (latest) {
+      document.getElementById('kpiLatestYoy').textContent = latest.yoyText;
+      document.getElementById('kpiLatestYoyDesc').textContent = `${latest.monthStr} 與前一年同月比較`;
+    }
+
+    // 渲染月度明細與 YoY 表格（加入 data-key 支援滑鼠聯動高亮）
+    const monthlyTbody = document.getElementById('monthlyTableBody');
+    monthlyTbody.innerHTML = enrichedRecords.map(r => {
+      let badgeHtml = `<span class="tag tag-na">缺前一年資料</span>`;
+      if (r.yoyValue !== null) {
+        const cls = r.yoyValue >= 0 ? 'tag-up' : 'tag-down';
+        badgeHtml = `<span class="tag ${cls}">${r.yoyText}</span>`;
+      }
+
+      return `
+        <tr class="interactive-row" data-key="${r.monthStr}">
+          <td><strong>${r.monthStr}</strong></td>
+          <td class="num">${formatNum(r.revenue)}</td>
+          <td class="num">${r.orders > 0 ? formatNum(r.orders) : '-'}</td>
+          <td class="num">${r.aov !== null ? formatNum(r.aov) : '-'}</td>
+          <td class="num">${r.prevRev !== null ? formatNum(r.prevRev) : '<span style="color:#94a3b8;">-</span>'}</td>
+          <td class="num">${badgeHtml}</td>
+        </tr>
+      `;
+    }).join('');
+
+    // 綁定表格滑鼠指向聯動圖表高亮
+    bindTableToChartHighlight(monthlyTbody, 'monthly');
+
+    // 儲存狀態並繪製互動式 SVG 折線趨勢圖
+    currentMode = 'monthly';
+    currentChartData = enrichedRecords;
+    renderMonthlyTrendChartSvg(enrichedRecords);
+  }
+
+  /**
+   * ==========================================
+   * 模組 C：原生互動式 SVG 圖表繪製與雙向聯動引擎
+   * ==========================================
+   */
+
+  // 統一控制圖表與表格的高亮狀態
+  function highlightChartItem(mode, key) {
+    if (mode === 'region') {
+      const container = document.getElementById('regionChartContainer');
+      const bars = container.querySelectorAll('.svg-bar-group');
+      const rows = document.querySelectorAll('#regionTableBody tr.interactive-row');
+
+      bars.forEach(g => {
+        const bar = g.querySelector('.svg-bar');
+        const tip = g.querySelector('.svg-tooltip-box');
+        if (!key) {
+          bar.classList.remove('dimmed', 'highlighted');
+          if (tip) tip.classList.remove('visible');
+        } else if (g.dataset.key === key) {
+          bar.classList.remove('dimmed');
+          bar.classList.add('highlighted');
+          if (tip) tip.classList.add('visible');
+        } else {
+          bar.classList.remove('highlighted');
+          bar.classList.add('dimmed');
+          if (tip) tip.classList.remove('visible');
+        }
+      });
+
+      rows.forEach(tr => {
+        tr.classList.toggle('active-row', Boolean(key && tr.dataset.key === key));
+      });
+    } else if (mode === 'monthly') {
+      const container = document.getElementById('monthlyChartContainer');
+      const points = container.querySelectorAll('.svg-point-group');
+      const rows = document.querySelectorAll('#monthlyTableBody tr.interactive-row');
+      const guideLine = container.querySelector('#monthlyGuideLine');
+
+      let activeX = null;
+
+      points.forEach(g => {
+        const tip = g.querySelector('.svg-tooltip-box');
+        if (!key) {
+          g.classList.remove('dimmed', 'highlighted');
+          if (tip) tip.classList.remove('visible');
+        } else if (g.dataset.key === key) {
+          g.classList.remove('dimmed');
+          g.classList.add('highlighted');
+          if (tip) tip.classList.add('visible');
+          activeX = g.dataset.cx;
+        } else {
+          g.classList.remove('highlighted');
+          g.classList.add('dimmed');
+          if (tip) tip.classList.remove('visible');
+        }
+      });
+
+      if (guideLine) {
+        if (activeX !== null) {
+          guideLine.setAttribute('x1', activeX);
+          guideLine.setAttribute('x2', activeX);
+          guideLine.style.opacity = '1';
+        } else {
+          guideLine.style.opacity = '0';
+        }
+      }
+
+      rows.forEach(tr => {
+        tr.classList.toggle('active-row', Boolean(key && tr.dataset.key === key));
+      });
+    }
+  }
+
+  // 綁定表格列的滑鼠指向事件與點擊切換
+  function bindTableToChartHighlight(tbodyEl, mode) {
+    const rows = tbodyEl.querySelectorAll('tr.interactive-row');
+    rows.forEach(row => {
+      const key = row.dataset.key;
+      row.addEventListener('mouseenter', () => highlightChartItem(mode, key));
+      row.addEventListener('mouseleave', () => highlightChartItem(mode, null));
+      row.addEventListener('click', () => {
+        const isAlreadyActive = row.classList.contains('active-row');
+        highlightChartItem(mode, isAlreadyActive ? null : key);
+      });
+    });
+  }
+
+  // 繪製 4 月各區域淨額互動式 SVG 長條圖
+  function renderRegionBarChartSvg(regionList) {
+    const container = document.getElementById('regionChartContainer');
+    if (!regionList || regionList.length === 0) {
+      container.innerHTML = '';
+      return;
+    }
+
+    const rect = container.getBoundingClientRect();
+    const width = Math.max(rect.width || 800, 320);
+    const height = Math.max(rect.height || 320, 240);
+    const padTop = 44;
+    const padBottom = 44;
+    const padLeft = 68;
+    const padRight = 24;
+    const chartW = width - padLeft - padRight;
+    const chartH = height - padTop - padBottom;
+
+    const maxVal = Math.max(...regionList.map(d => d.netAmount), 100);
+    const minVal = Math.min(...regionList.map(d => d.netAmount), 0);
+    const range = maxVal - minVal;
+    const zeroY = padTop + (maxVal / range) * chartH;
+
+    let svgParts = [
+      `<svg id="regionSvgElement" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="100%" height="100%" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans TC', sans-serif; background: #ffffff;">`
+    ];
+
+    // 水平格線與 Y 軸刻度
+    const steps = 4;
+    for (let i = 0; i <= steps; i++) {
+      const val = minVal + (range * i) / steps;
+      const y = padTop + chartH - (chartH * i) / steps;
+      svgParts.push(`<line x1="${padLeft}" y1="${y.toFixed(1)}" x2="${width - padRight}" y2="${y.toFixed(1)}" stroke="#e2e8f0" stroke-width="1"/>`);
+      svgParts.push(`<text x="${padLeft - 8}" y="${(y + 4).toFixed(1)}" font-size="12" fill="#64748b" text-anchor="end">${formatNum(val)}</text>`);
+    }
+
+    // 零基準線
+    svgParts.push(`<line x1="${padLeft}" y1="${zeroY.toFixed(1)}" x2="${width - padRight}" y2="${zeroY.toFixed(1)}" stroke="#94a3b8" stroke-width="1.5"/>`);
+
+    // 繪製各區域長條與互動提示框
+    const barSlotW = chartW / regionList.length;
+    const barW = Math.min(barSlotW * 0.48, 76);
+
+    regionList.forEach((item, index) => {
+      const x = padLeft + index * barSlotW + (barSlotW - barW) / 2;
+      const centerX = x + barW / 2;
+      const barH = Math.max((Math.abs(item.netAmount) / range) * chartH, 4);
+      const y = item.netAmount >= 0 ? zeroY - barH : zeroY;
+      const fillColor = item.netAmount >= 0 ? '#2563eb' : '#dc2626';
+      const labelY = item.netAmount >= 0 ? y - 8 : y + barH + 16;
+
+      // 浮動高亮提示框座標
+      const tipW = 152;
+      const tipH = 38;
+      const tipX = Math.min(Math.max(centerX - tipW / 2, padLeft), width - padRight - tipW);
+      const tipY = Math.max(y - tipH - 26, 4);
+
+      svgParts.push(`
+        <g class="svg-bar-group" data-key="${item.region}">
+          <rect class="svg-bar" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${barH.toFixed(1)}" rx="6" fill="${fillColor}"/>
+          <text x="${centerX.toFixed(1)}" y="${labelY.toFixed(1)}" font-size="12" font-weight="bold" fill="#0f172a" text-anchor="middle">${formatNum(item.netAmount)} 元</text>
+          <text x="${centerX.toFixed(1)}" y="${height - padBottom + 20}" font-size="13" font-weight="bold" fill="#334155" text-anchor="middle">${item.region} (${item.count}筆)</text>
+          <g class="svg-tooltip-box">
+            <rect x="${tipX.toFixed(1)}" y="${tipY.toFixed(1)}" width="${tipW}" height="${tipH}" rx="6" fill="#0f172a"/>
+            <text x="${(tipX + tipW / 2).toFixed(1)}" y="${(tipY + 15).toFixed(1)}" font-size="11" font-weight="bold" fill="#93c5fd" text-anchor="middle">${item.region} 區｜有效 ${item.count} 筆</text>
+            <text x="${(tipX + tipW / 2).toFixed(1)}" y="${(tipY + 30).toFixed(1)}" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">淨額：${formatNum(item.netAmount)} 元</text>
+          </g>
+        </g>
+      `);
+    });
+
+    svgParts.push(`</svg>`);
+    container.innerHTML = svgParts.join('');
+
+    // 綁定圖表上的長條滑鼠指向同步高亮表格列
+    container.querySelectorAll('.svg-bar-group').forEach(g => {
+      const key = g.dataset.key;
+      g.addEventListener('mouseenter', () => highlightChartItem('region', key));
+      g.addEventListener('mouseleave', () => highlightChartItem('region', null));
+    });
+  }
+
+  // 繪製 24 個月營收趨勢互動式 SVG 折線圖
+  function renderMonthlyTrendChartSvg(records) {
+    const container = document.getElementById('monthlyChartContainer');
+    if (!records || records.length === 0) {
+      container.innerHTML = '';
+      return;
+    }
+
+    const rect = container.getBoundingClientRect();
+    const width = Math.max(rect.width || 800, 320);
+    const height = Math.max(rect.height || 320, 240);
+    const padTop = 44;
+    const padBottom = 46;
+    const padLeft = 72;
+    const padRight = 28;
+    const chartW = width - padLeft - padRight;
+    const chartH = height - padTop - padBottom;
+
+    const revenues = records.map(d => d.revenue);
+    const maxVal = Math.max(...revenues, 100);
+    const minVal = Math.min(...revenues, 0);
+    const range = Math.max(maxVal - minVal, 1);
+
+    let svgParts = [
+      `<svg id="monthlySvgElement" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="100%" height="100%" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans TC', sans-serif; background: #ffffff;">`
+    ];
+
+    // 水平格線與 Y 軸刻度
+    const steps = 4;
+    for (let i = 0; i <= steps; i++) {
+      const val = minVal + (range * i) / steps;
+      const y = padTop + chartH - (chartH * i) / steps;
+      svgParts.push(`<line x1="${padLeft}" y1="${y.toFixed(1)}" x2="${width - padRight}" y2="${y.toFixed(1)}" stroke="#e2e8f0" stroke-width="1"/>`);
+      svgParts.push(`<text x="${padLeft - 8}" y="${(y + 4).toFixed(1)}" font-size="12" fill="#64748b" text-anchor="end">${formatNum(val)}</text>`);
+    }
+
+    // 計算每個資料點座標
+    const stepX = records.length > 1 ? chartW / (records.length - 1) : chartW / 2;
+    const coords = records.map((item, idx) => {
+      const cx = records.length > 1 ? padLeft + idx * stepX : padLeft + chartW / 2;
+      const cy = padTop + chartH - ((item.revenue - minVal) / range) * chartH;
+      return { cx, cy, item, idx };
+    });
+
+    // 漸層填充區域
+    if (coords.length > 1) {
+      svgParts.push(`
+        <defs>
+          <linearGradient id="monthlyAreaGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#2563eb" stop-opacity="0.22"/>
+            <stop offset="100%" stop-color="#2563eb" stop-opacity="0.0"/>
+          </linearGradient>
+        </defs>
+      `);
+      const baselineY = padTop + chartH;
+      const areaPoints = [
+        `${coords[0].cx.toFixed(1)},${baselineY.toFixed(1)}`,
+        ...coords.map(c => `${c.cx.toFixed(1)},${c.cy.toFixed(1)}`),
+        `${coords[coords.length - 1].cx.toFixed(1)},${baselineY.toFixed(1)}`
+      ].join(' ');
+      svgParts.push(`<polygon points="${areaPoints}" fill="url(#monthlyAreaGrad)"/>`);
+
+      // 折線路徑
+      const polyPoints = coords.map(c => `${c.cx.toFixed(1)},${c.cy.toFixed(1)}`).join(' ');
+      svgParts.push(`<polyline points="${polyPoints}" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`);
+    }
+
+    // 垂直導引虛線（滑鼠高亮時顯示）
+    svgParts.push(`<line id="monthlyGuideLine" x1="0" y1="${padTop}" x2="0" y2="${padTop + chartH}" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="4 4" style="opacity: 0; pointer-events: none; transition: opacity 0.15s ease;"/>`);
+
+    // X 軸標籤間隔控制（避免 24 個月標籤重疊）
+    const labelInterval = records.length > 14 ? 3 : records.length > 8 ? 2 : 1;
+
+    coords.forEach(({ cx, cy, item, idx }) => {
+      if (idx % labelInterval === 0 || idx === records.length - 1) {
+        svgParts.push(`<text x="${cx.toFixed(1)}" y="${height - padBottom + 20}" font-size="11" fill="#475569" text-anchor="middle">${item.monthStr}</text>`);
+      }
+
+      // 浮動提示框座標
+      const tipW = 166;
+      const tipH = 44;
+      const tipX = Math.min(Math.max(cx - tipW / 2, padLeft), width - padRight - tipW);
+      const tipY = Math.max(cy - tipH - 14, 4);
+      const yoyLabel = item.yoyValue !== null ? item.yoyText : '缺前一年資料';
+
+      svgParts.push(`
+        <g class="svg-point-group" data-key="${item.monthStr}" data-cx="${cx.toFixed(1)}">
+          <circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="12" fill="transparent"/>
+          <circle class="svg-point-circle" cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="4.5" fill="#2563eb" stroke="#ffffff" stroke-width="2"/>
+          <g class="svg-tooltip-box">
+            <rect x="${tipX.toFixed(1)}" y="${tipY.toFixed(1)}" width="${tipW}" height="${tipH}" rx="6" fill="#0f172a"/>
+            <text x="${(tipX + tipW / 2).toFixed(1)}" y="${(tipY + 16).toFixed(1)}" font-size="11" font-weight="bold" fill="#93c5fd" text-anchor="middle">${item.monthStr}｜YoY: ${yoyLabel}</text>
+            <text x="${(tipX + tipW / 2).toFixed(1)}" y="${(tipY + 33).toFixed(1)}" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">營收：${formatNum(item.revenue)} 元</text>
+          </g>
+        </g>
+      `);
+    });
+
+    svgParts.push(`</svg>`);
+    container.innerHTML = svgParts.join('');
+
+    // 綁定圖表節點滑鼠指向同步高亮表格列
+    container.querySelectorAll('.svg-point-group').forEach(g => {
+      const key = g.dataset.key;
+      g.addEventListener('mouseenter', () => highlightChartItem('monthly', key));
+      g.addEventListener('mouseleave', () => highlightChartItem('monthly', null));
+    });
+  }
+
+  // 匯出 SVG 向量檔案功能
+  function downloadSvgElement(svgId, filename) {
+    const svgEl = document.getElementById(svgId);
+    if (!svgEl) return;
+
+    const clone = svgEl.cloneNode(true);
+    clone.querySelectorAll('.svg-tooltip-box').forEach(el => el.remove());
+    clone.querySelectorAll('.dimmed').forEach(el => el.classList.remove('dimmed'));
+
+    const serializer = new XMLSerializer();
+    let source = serializer.serializeToString(clone);
+    if (!source.match(/^<svg[^>]+xmlns="http\:\/\/www\.w3\.org\/2000\/svg"/)) {
+      source = source.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
+    }
+
+    const blob = new Blob([source], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
+  // 綁定 SVG 匯出按鈕與視窗尺寸變更重繪
+  document.getElementById('btnExportMonthlySvg').addEventListener('click', () => {
+    downloadSvgElement('monthlySvgElement', 'monthly-revenue-trend.svg');
+  });
+
+  document.getElementById('btnExportRegionSvg').addEventListener('click', () => {
+    downloadSvgElement('regionSvgElement', 'april-region-net-revenue.svg');
+  });
+
+  window.addEventListener('resize', () => {
+    if (currentMode === 'raw' && currentChartData) {
+      renderRegionBarChartSvg(currentChartData);
+    } else if (currentMode === 'monthly' && currentChartData) {
+      renderMonthlyTrendChartSvg(currentChartData);
+    }
+  });
+</script>
+</body>
+</html>
